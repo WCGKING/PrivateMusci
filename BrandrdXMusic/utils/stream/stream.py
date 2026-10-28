@@ -211,6 +211,7 @@ async def stream(
             reply_markup=upl,
         )
 
+    
     elif streamtype == "youtube":
         link = result["link"]
         vidid = result["vidid"]
@@ -220,23 +221,41 @@ async def stream(
         status = True if video else None
 
         try:
-            file_path, direct = await YouTube.download(
+            download_result = await YouTube.download(
                 vidid,
                 mystic,
                 videoid=True,
                 video=status,
             )
+
+            if (
+                not download_result
+                or not isinstance(download_result, (tuple, list))
+                or len(download_result) != 2
+            ):
+                LOGGER(__name__).error(
+                    "YouTube download returned an invalid result for %s",
+                    vidid,
+                )
+                await mystic.edit_text(_["play_3"])
+                return
+
+            file_path, direct = download_result
+
+            if not file_path:
+                LOGGER(__name__).error(
+                    "YouTube returned an empty file path for %s. "
+                    "Check yt-dlp extraction and YouTube authentication.",
+                    vidid,
+                )
+                await mystic.edit_text(_["play_3"])
+                return
+
         except Exception:
             LOGGER(__name__).error(
-                "stream: YouTube download failed",
+                "YouTube download failed for %s",
+                vidid,
                 exc_info=True,
-            )
-            await mystic.edit_text(_["play_3"])
-            return
-
-        if not file_path:
-            LOGGER(__name__).error(
-                "stream: YouTube returned an empty file path"
             )
             await mystic.edit_text(_["play_3"])
             return
@@ -312,7 +331,7 @@ async def stream(
 
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "stream"
-
+            
     elif streamtype == "soundcloud":
         file_path = result["filepath"]
         title = result["title"]
