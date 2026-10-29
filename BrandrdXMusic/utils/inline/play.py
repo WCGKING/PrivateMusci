@@ -1,13 +1,17 @@
 import math
-from BrandrdXMusic import app
 
+from BrandrdXMusic import app
 from pyrogram.enums import ButtonStyle
 from pyrogram.types import InlineKeyboardButton
 from BrandrdXMusic.utils.database import is_autoplay
 from BrandrdXMusic.utils.formatters import time_to_seconds
 
 
-COLORS = (ButtonStyle.PRIMARY, ButtonStyle.SUCCESS, ButtonStyle.DANGER)
+COLORS = (
+    ButtonStyle.PRIMARY,
+    ButtonStyle.SUCCESS,
+    ButtonStyle.DANGER,
+)
 
 
 # ============================================================
@@ -19,12 +23,16 @@ def track_markup(_, videoid, user_id, channel, fplay):
         [
             InlineKeyboardButton(
                 text=_["P_B_1"],
-                callback_data=f"MusicStream {videoid}|{user_id}|a|{channel}|{fplay}",
+                callback_data=(
+                    f"MusicStream {videoid}|{user_id}|a|{channel}|{fplay}"
+                ),
                 style=COLORS[0],
             ),
             InlineKeyboardButton(
                 text=_["P_B_2"],
-                callback_data=f"MusicStream {videoid}|{user_id}|v|{channel}|{fplay}",
+                callback_data=(
+                    f"MusicStream {videoid}|{user_id}|v|{channel}|{fplay}"
+                ),
                 style=COLORS[1],
             ),
         ],
@@ -44,10 +52,10 @@ def track_markup(_, videoid, user_id, channel, fplay):
 
 def autoplay_markup(chat_id, mode=None):
     if mode is True:
-        text = "🔁 Autoplay: ON"
+        text = "🟢 Autoplay: ON"
         style = COLORS[1]
     elif mode is False:
-        text = "🔁 Autoplay: OFF"
+        text = "🔴 Autoplay: OFF"
         style = COLORS[2]
     else:
         text = "🔁 Autoplay: ON/OFF"
@@ -186,7 +194,7 @@ def stream_markup(_, videoid, chat_id):
 
 
 # ============================================================
-# Compatibility function for call.py
+# Compatibility Function for call.py
 # ============================================================
 
 def stream_markup2(_, videoid, chat_id):
@@ -296,4 +304,3 @@ def slider_markup(_, videoid, user_id, query, query_type, channel, fplay):
             ),
         ],
     ]
-                                                    
