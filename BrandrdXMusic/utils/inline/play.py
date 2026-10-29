@@ -69,19 +69,40 @@ def autoplay_markup(chat_id, mode=None):
 # ============================================================
 # Stream Timer Markup
 # ============================================================
-
 def stream_markup_timer(_, vidid, chat_id, played, dur):
-    played_sec = time_to_seconds(played) or 0
-    duration_sec = time_to_seconds(dur) or 1
+    umm = 0
 
-    percentage = max(
-        0,
-        min(100, (played_sec / duration_sec) * 100),
-    )
+    try:
+        played_sec = time_to_seconds(played) or 0
+        duration_sec = time_to_seconds(dur) or 0
 
-    # Ten-step progress bar
-    position = min(9, int(percentage // 10))
-    bar = "—" * position + "▷" + "—" * (9 - position)
+        if duration_sec > 0:
+            percentage = (played_sec / duration_sec) * 100
+            umm = math.floor(max(0, min(100, percentage)))
+
+    except (ValueError, TypeError, ZeroDivisionError, OverflowError):
+        umm = 0
+
+    if umm <= 10:
+        bar = "❥—————————"
+    elif umm < 20:
+        bar = "—❥————————"
+    elif umm < 30:
+        bar = "——❥———————"
+    elif umm < 40:
+        bar = "———❥——————"
+    elif umm < 50:
+        bar = "————❥—————"
+    elif umm < 60:
+        bar = "—————❥————"
+    elif umm < 70:
+        bar = "——————❥———"
+    elif umm < 80:
+        bar = "———————❥——"
+    elif umm < 95:
+        bar = "————————❥—"
+    else:
+        bar = "—————————❥"
 
     return [
         [
@@ -127,7 +148,6 @@ def stream_markup_timer(_, vidid, chat_id, played, dur):
             )
         ],
     ]
-
 
 # ============================================================
 # Normal Stream Markup
