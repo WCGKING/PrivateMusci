@@ -38,15 +38,26 @@ def track_markup(_, videoid, user_id, channel, fplay):
     ]
 
 
+# ============================================================
 # Autoplay Markup
-def autoplay_markup(chat_id, mode: bool):
-    text = "🔁 Autoplay: ON" if mode else "🔁 Autoplay: OFF"
+# ============================================================
+
+def autoplay_markup(chat_id, mode=None):
+    if mode is True:
+        text = "🔁 Autoplay: ON"
+        style = COLORS[1]
+    elif mode is False:
+        text = "🔁 Autoplay: OFF"
+        style = COLORS[2]
+    else:
+        text = "🔁 Autoplay: ON/OFF"
+        style = COLORS[0]
 
     return [
         InlineKeyboardButton(
             text=text,
             callback_data=f"autoplay {chat_id}",
-            style=COLORS[1] if mode else COLORS[2],
+            style=style,
         )
     ]
 
@@ -119,7 +130,7 @@ def stream_markup_timer(_, vidid, chat_id, played, dur):
                 style=COLORS[2],
             ),
         ],
-
+        autoplay_markup(chat_id),
         [
             InlineKeyboardButton(
                 text=_["CLOSE_BUTTON"],
@@ -163,6 +174,7 @@ def stream_markup(_, videoid, chat_id):
                 style=COLORS[2],
             ),
         ],
+        autoplay_markup(chat_id),
         [
             InlineKeyboardButton(
                 text="ᴏᴡɴᴇʀ",
@@ -181,11 +193,7 @@ def stream_markup(_, videoid, chat_id):
 
 
 # ============================================================
-# Stream Markup 2
-#
-# Compatibility function for call.py.
-# Prevents:
-# ImportError: cannot import name 'stream_markup2'
+# Compatibility function for call.py
 # ============================================================
 
 def stream_markup2(_, videoid, chat_id):
@@ -287,7 +295,7 @@ def slider_markup(_, videoid, user_id, query, query_type, channel, fplay):
                 style=COLORS[2],
             ),
             InlineKeyboardButton(
-                text="◀️",
+                text="▶️",
                 callback_data=(
                     f"slider F|{query_type}|{query}|{user_id}|{channel}|{fplay}"
                 ),
@@ -295,3 +303,4 @@ def slider_markup(_, videoid, user_id, query, query_type, channel, fplay):
             ),
         ],
     ]
+                                                    
