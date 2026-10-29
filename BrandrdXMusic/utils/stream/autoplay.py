@@ -328,14 +328,16 @@ async def try_autoplay(chat_id, popped) -> bool:
         await put_queue(
             chat_id,
             original_chat_id,
-            file_path if direct else f"vid_{next_id}",
-            title,
-            duration_min,
-            "Autoplay",
-            next_id,
-            app.id,
-            "video" if video else "audio",
-        )
+            file_path if direct else 
+    f"vid_{next_id}",
+        title,
+        duration_min,
+        "Autoplay",
+        next_id,
+        app.id,
+        "video" if video else "audio",
+    )
+        
     except Exception:
         try:
             await Hotty.stop_stream(chat_id)
