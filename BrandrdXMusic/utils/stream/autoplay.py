@@ -7,7 +7,6 @@ from BrandrdXMusic.misc import db
 from BrandrdXMusic.platforms.Youtube import get_autoplay, is_external_path
 from BrandrdXMusic.utils.database import get_lang, is_autoplay
 from BrandrdXMusic.utils.formatters import seconds_to_min
-from BrandrdXMusic.utils.rich_stream import send_now_playing_rich
 from BrandrdXMusic.utils.stream.history import record_played, was_recently_played
 from BrandrdXMusic.utils.stream.queue import put_queue
 from BrandrdXMusic.utils.stream.seed import get_seed
