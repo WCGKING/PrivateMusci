@@ -177,13 +177,6 @@ def stream_markup(_, videoid, chat_id):
         autoplay_markup(chat_id),
         [
             InlineKeyboardButton(
-                text="ᴏᴡɴᴇʀ",
-                url="https://t.me/BRANDEDKING8",
-                style=COLORS[0],
-            )
-        ],
-        [
-            InlineKeyboardButton(
                 text=_["CLOSE_BUTTON"],
                 callback_data="close",
                 style=COLORS[2],
