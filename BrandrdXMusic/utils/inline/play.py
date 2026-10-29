@@ -1,8 +1,8 @@
 import math
 
-from BrandrdXMusic import app
 from pyrogram.enums import ButtonStyle
 from pyrogram.types import InlineKeyboardButton
+
 from BrandrdXMusic.utils.database import is_autoplay
 from BrandrdXMusic.utils.formatters import time_to_seconds
 
@@ -23,16 +23,12 @@ def track_markup(_, videoid, user_id, channel, fplay):
         [
             InlineKeyboardButton(
                 text=_["P_B_1"],
-                callback_data=(
-                    f"MusicStream {videoid}|{user_id}|a|{channel}|{fplay}"
-                ),
+                callback_data=f"MusicStream {videoid}|{user_id}|a|{channel}|{fplay}",
                 style=COLORS[0],
             ),
             InlineKeyboardButton(
                 text=_["P_B_2"],
-                callback_data=(
-                    f"MusicStream {videoid}|{user_id}|v|{channel}|{fplay}"
-                ),
+                callback_data=f"MusicStream {videoid}|{user_id}|v|{channel}|{fplay}",
                 style=COLORS[1],
             ),
         ],
@@ -75,33 +71,17 @@ def autoplay_markup(chat_id, mode=None):
 # ============================================================
 
 def stream_markup_timer(_, vidid, chat_id, played, dur):
-    played_sec = time_to_seconds(played)
+    played_sec = time_to_seconds(played) or 0
     duration_sec = time_to_seconds(dur) or 1
 
-    percentage = (played_sec / duration_sec) * 100
-    percentage = max(0, min(100, percentage))
-    umm = math.floor(percentage)
+    percentage = max(
+        0,
+        min(100, (played_sec / duration_sec) * 100),
+    )
 
-    if 0 < umm <= 10:
-        bar = "▷—————————"
-    elif 10 < umm < 20:
-        bar = "—▷————————"
-    elif 20 <= umm < 30:
-        bar = "——▷———————"
-    elif 30 <= umm < 40:
-        bar = "———▷——————"
-    elif 40 <= umm < 50:
-        bar = "————▷—————"
-    elif 50 <= umm < 60:
-        bar = "—————▷————"
-    elif 60 <= umm < 70:
-        bar = "——————▷———"
-    elif 70 <= umm < 80:
-        bar = "———————▷——"
-    elif 80 <= umm < 95:
-        bar = "————————▷—"
-    else:
-        bar = "—————————▷"
+    # Ten-step progress bar
+    position = min(9, int(percentage // 10))
+    bar = "—" * position + "▷" + "—" * (9 - position)
 
     return [
         [
@@ -150,7 +130,7 @@ def stream_markup_timer(_, vidid, chat_id, played, dur):
 
 
 # ============================================================
-# Stream Markup
+# Normal Stream Markup
 # ============================================================
 
 def stream_markup(_, videoid, chat_id):
@@ -194,7 +174,7 @@ def stream_markup(_, videoid, chat_id):
 
 
 # ============================================================
-# Compatibility Function for call.py
+# Compatibility Function
 # ============================================================
 
 def stream_markup2(_, videoid, chat_id):
@@ -210,16 +190,12 @@ def playlist_markup(_, videoid, user_id, ptype, channel, fplay):
         [
             InlineKeyboardButton(
                 text=_["P_B_1"],
-                callback_data=(
-                    f"Playlists {videoid}|{user_id}|{ptype}|a|{channel}|{fplay}"
-                ),
+                callback_data=f"Playlists {videoid}|{user_id}|{ptype}|a|{channel}|{fplay}",
                 style=COLORS[0],
             ),
             InlineKeyboardButton(
                 text=_["P_B_2"],
-                callback_data=(
-                    f"Playlists {videoid}|{user_id}|{ptype}|v|{channel}|{fplay}"
-                ),
+                callback_data=f"Playlists {videoid}|{user_id}|{ptype}|v|{channel}|{fplay}",
                 style=COLORS[1],
             ),
         ],
@@ -242,9 +218,7 @@ def livestream_markup(_, videoid, user_id, mode, channel, fplay):
         [
             InlineKeyboardButton(
                 text=_["P_B_3"],
-                callback_data=(
-                    f"LiveStream {videoid}|{user_id}|{mode}|{channel}|{fplay}"
-                ),
+                callback_data=f"LiveStream {videoid}|{user_id}|{mode}|{channel}|{fplay}",
                 style=COLORS[1],
             )
         ],
@@ -263,31 +237,25 @@ def livestream_markup(_, videoid, user_id, mode, channel, fplay):
 # ============================================================
 
 def slider_markup(_, videoid, user_id, query, query_type, channel, fplay):
-    query = f"{query[:20]}"
+    query = str(query)[:20]
 
     return [
         [
             InlineKeyboardButton(
                 text=_["P_B_1"],
-                callback_data=(
-                    f"MusicStream {videoid}|{user_id}|a|{channel}|{fplay}"
-                ),
+                callback_data=f"MusicStream {videoid}|{user_id}|a|{channel}|{fplay}",
                 style=COLORS[0],
             ),
             InlineKeyboardButton(
                 text=_["P_B_2"],
-                callback_data=(
-                    f"MusicStream {videoid}|{user_id}|v|{channel}|{fplay}"
-                ),
+                callback_data=f"MusicStream {videoid}|{user_id}|v|{channel}|{fplay}",
                 style=COLORS[1],
             ),
         ],
         [
             InlineKeyboardButton(
                 text="◀️",
-                callback_data=(
-                    f"slider B|{query_type}|{query}|{user_id}|{channel}|{fplay}"
-                ),
+                callback_data=f"slider B|{query_type}|{query}|{user_id}|{channel}|{fplay}",
                 style=COLORS[0],
             ),
             InlineKeyboardButton(
@@ -297,9 +265,7 @@ def slider_markup(_, videoid, user_id, query, query_type, channel, fplay):
             ),
             InlineKeyboardButton(
                 text="▶️",
-                callback_data=(
-                    f"slider F|{query_type}|{query}|{user_id}|{channel}|{fplay}"
-                ),
+                callback_data=f"slider F|{query_type}|{query}|{user_id}|{channel}|{fplay}",
                 style=COLORS[1],
             ),
         ],
