@@ -323,7 +323,6 @@ async def try_autoplay(chat_id, popped) -> bool:
 
     next_id, title, duration_min, file_path, direct, img = picked
 
-    # Import inside the function to avoid a circular import.
     from BrandrdXMusic.core.call import Hotty
 
     try:
@@ -348,7 +347,6 @@ async def try_autoplay(chat_id, popped) -> bool:
             app.me.id,
             "video" if video else "audio",
         )
-
     except Exception:
         try:
             await Hotty.stop_stream(chat_id)
@@ -370,6 +368,13 @@ async def try_autoplay(chat_id, popped) -> bool:
         "Autoplay",
     )
 
+    # Build the player buttons for the new autoplay track.
+    from pyrogram.types import InlineKeyboardMarkup
+    from BrandrdXMusic.utils.inline import stream_markup
+
+    buttons = stream_markup(_, next_id, chat_id)
+    reply_markup = InlineKeyboardMarkup(buttons)
+
     photo = img
 
     if not photo:
@@ -384,16 +389,19 @@ async def try_autoplay(chat_id, popped) -> bool:
                 chat_id=original_chat_id,
                 photo=photo,
                 caption=caption,
+                reply_markup=reply_markup,
             )
         except Exception:
             run = await app.send_message(
                 chat_id=original_chat_id,
                 text=caption,
+                reply_markup=reply_markup,
             )
     else:
         run = await app.send_message(
             chat_id=original_chat_id,
             text=caption,
+            reply_markup=reply_markup,
         )
 
     if db.get(chat_id):
