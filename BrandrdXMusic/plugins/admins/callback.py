@@ -34,7 +34,6 @@ from BrandrdXMusic.utils.inline import (
 
 )
 from BrandrdXMusic.utils.stream.autoclear import auto_clean
-from BrandrdXMusic.utils.rich_stream import set_now_playing_state
 from BrandrdXMusic.utils.thumbnails import get_thumb
 from config import (
     BANNED_USERS,
@@ -475,24 +474,28 @@ async def markup_timer():
                 LOGGER(__name__).warning("markup_timer: unhandled exception", exc_info=True)
                 continue
 
-@app.on_callback_query(filters.regex(r"^nowplaying_autoplay ") & ~BANNED_USERS)
+@app.on_callback_query(filters.regex(r"^(?:autoplay|nowplaying_autoplay) ") & ~BANNED_USERS)
 @ActualAdminCB
 async def nowplaying_autoplay_toggle(client, CallbackQuery, _):
-    chat_id = int(CallbackQuery.data.split(None, 1)[1])
+    try:
+        chat_id = int(CallbackQuery.data.split(None, 1)[1])
+    except (IndexError, ValueError):
+        return await CallbackQuery.answer(
+            "Invalid autoplay request.",
+            show_alert=True,
+        )
+
     if await is_autoplay(chat_id):
         await autoplay_off(chat_id)
-        toast = "Autoplay turned OFF"
+        toast = "🔴 Autoplay turned OFF"
     else:
         if not await is_active_chat(chat_id):
-            await CallbackQuery.answer(
-                "No song is currently playing. Play something first, then enable Autoplay.",
+            return await CallbackQuery.answer(
+                "No song is currently playing. Play something first.",
                 show_alert=True,
             )
-            return
+
         await autoplay_on(chat_id)
-        toast = "Autoplay turned ON"
+        toast = "🟢 Autoplay turned ON"
+
     await CallbackQuery.answer(toast, show_alert=False)
-    await set_now_playing_state(chat_id, await is_music_playing(chat_id))
-
-
-asyncio.create_task(markup_timer())
