@@ -107,7 +107,7 @@ def stream_markup_timer(_, vidid, chat_id, played, dur):
     return [
         [
             InlineKeyboardButton(
-                text=f"{played} {bar} {dur}",
+                text=f"⏱️ {played} ━━━ {dur}",
                 callback_data="GetTimer",
                 style=COLORS[0],
             )
