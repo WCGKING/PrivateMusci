@@ -1,8 +1,10 @@
 import os
+import asyncio
 from random import randint
 from typing import Union
 
 from pyrogram.types import InlineKeyboardMarkup
+from pyrogram.errors import FloodWait
 from BrandrdXMusic.utils.database import get_assistant
 import config
 from BrandrdXMusic import (
@@ -294,17 +296,52 @@ async def stream(
             position = len(db.get(chat_id)) - 1
             button = aq_markup(_, chat_id)
 
-            await app.send_photo(
-                chat_id=original_chat_id,
-                photo=img,
-                caption=_["queue_4"].format(
-                    position,
-                    title[:18],
-                    duration_min,
-                    user_name,
-                ),
-                reply_markup=InlineKeyboardMarkup(button),
-            )
+            try:
+                await app.send_photo(
+                    chat_id=original_chat_id,
+                    photo=img,
+                    caption=_["queue_4"].format(
+                        position,
+                        title[:18],
+                        duration_min,
+                        user_name,
+                    ),
+                    reply_markup=InlineKeyboardMarkup(button),
+                )
+            except FloodWait as e:
+                LOGGER(__name__).warning(
+                    "send_photo FloodWait: waiting %s seconds",
+                    e.value,
+                )
+                await asyncio.sleep(e.value + 1)
+
+                try:
+                    await app.send_photo(
+                        chat_id=original_chat_id,
+                        photo=img,
+                        caption=_["queue_4"].format(
+                            position,
+                            title[:18],
+                            duration_min,
+                            user_name,
+                        ),
+                        reply_markup=InlineKeyboardMarkup(button),
+                    )
+                except FloodWait as retry_error:
+                    LOGGER(__name__).warning(
+                        "send_photo retry FloodWait: %s seconds",
+                        retry_error.value,
+                    )
+                except Exception:
+                    LOGGER(__name__).error(
+                        "stream: queue photo retry failed",
+                        exc_info=True,
+                    )
+            except Exception:
+                LOGGER(__name__).error(
+                    "stream: failed to send queue photo",
+                    exc_info=True,
+                )
 
         else:
             if not forceplay:
