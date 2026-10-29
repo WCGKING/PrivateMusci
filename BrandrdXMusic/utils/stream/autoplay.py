@@ -2,16 +2,23 @@ import asyncio
 import os
 import re
 
+from pyrogram.types import InlineKeyboardMarkup
+
 from BrandrdXMusic import YouTube, app
 from BrandrdXMusic.misc import db
 from BrandrdXMusic.platforms.Youtube import get_autoplay, is_external_path
 from BrandrdXMusic.utils.database import get_lang, is_autoplay
 from BrandrdXMusic.utils.formatters import seconds_to_min
-from BrandrdXMusic.utils.stream.history import record_played, was_recently_played
+from BrandrdXMusic.utils.inline import stream_markup
+from BrandrdXMusic.utils.stream.history import (
+    record_played,
+    was_recently_played,
+)
 from BrandrdXMusic.utils.stream.queue import put_queue
 from BrandrdXMusic.utils.stream.seed import get_seed
 from BrandrdXMusic.utils.thumbnails import get_thumb
 from strings import get_string
+
 
 PREFETCH_AFTER = 5
 DOWNLOAD_TIMEOUT = 90
@@ -180,7 +187,6 @@ async def _prefetch(chat_id, entry):
             entry["video"],
             DOWNLOAD_TIMEOUT,
         )
-
     except Exception:
         picked = None
 
@@ -227,8 +233,11 @@ async def schedule_prefetch(chat_id, playing):
     if entry:
         _discard_entry(entry)
 
-    video = str(item.get("streamtype")) == "video"
-    fresh = _new_entry(source_id, carry, video)
+    fresh = _new_entry(
+        source_id,
+        carry,
+        str(item.get("streamtype")) == "video",
+    )
 
     _cache[chat_id] = fresh
     fresh["task"] = asyncio.ensure_future(
@@ -325,6 +334,7 @@ async def try_autoplay(chat_id, popped) -> bool:
 
     from BrandrdXMusic.core.call import Hotty
 
+    # Start the next track.
     try:
         await Hotty.skip_stream(
             chat_id,
@@ -335,6 +345,7 @@ async def try_autoplay(chat_id, popped) -> bool:
         _release_file(file_path)
         return False
 
+    # Add the next track to the queue.
     try:
         await put_queue(
             chat_id,
@@ -368,10 +379,7 @@ async def try_autoplay(chat_id, popped) -> bool:
         "Autoplay",
     )
 
-    # Build the player buttons for the new autoplay track.
-    from pyrogram.types import InlineKeyboardMarkup
-    from BrandrdXMusic.utils.inline import stream_markup
-
+    # Attach the same player controls used by normal playback.
     buttons = stream_markup(_, next_id, chat_id)
     reply_markup = InlineKeyboardMarkup(buttons)
 
@@ -404,6 +412,7 @@ async def try_autoplay(chat_id, popped) -> bool:
             reply_markup=reply_markup,
         )
 
+    # Save the message so the timer can update its keyboard.
     if db.get(chat_id):
         db[chat_id][0]["mystic"] = run
         db[chat_id][0]["markup"] = "stream"
