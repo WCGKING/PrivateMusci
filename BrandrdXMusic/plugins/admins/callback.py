@@ -640,7 +640,7 @@ async def nowplaying_autoplay_toggle(client, CallbackQuery, _):
             current.get("vidid", ""),
             chat_id,
         )
-        buttons[-2] = autoplay_markup(chat_id, mode)
+        buttons[2] = autoplay_markup(chat_id, mode)
 
         await mystic.edit_reply_markup(
             reply_markup=InlineKeyboardMarkup(buttons)
