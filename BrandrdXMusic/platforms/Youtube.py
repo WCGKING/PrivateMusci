@@ -1,5 +1,5 @@
-
 import asyncio
+import logging
 import os
 import re
 from typing import Union
@@ -9,6 +9,8 @@ import yt_dlp
 from pyrogram.enums import MessageEntityType
 from pyrogram.types import Message
 from py_yt import VideosSearch, Playlist
+
+LOGGER = logging.getLogger(__name__)
 
 API_URL = os.environ.get("API_URL", "").rstrip("/")
 API_KEY = os.environ.get("API_KEY", "")
@@ -108,6 +110,11 @@ async def _download_media(link: str, kind: str, timeout: int) -> str:
                 timeout=aiohttp.ClientTimeout(total=timeout),
             ) as resp:
                 if resp.status != 200:
+                    LOGGER.warning(
+                        "Media API returned HTTP %s for %s",
+                        resp.status,
+                        video_id,
+                    )
                     return None
 
                 if external:
@@ -127,6 +134,8 @@ async def _download_media(link: str, kind: str, timeout: int) -> str:
         return None
 
     except Exception:
+        LOGGER.exception("Media download failed for %s", video_id)
+
         if os.path.exists(file_path):
             try:
                 os.remove(file_path)
@@ -188,15 +197,20 @@ async def get_autoplay(
                         await asyncio.sleep(AUTOPLAY_RETRY_DELAY)
                         continue
 
+                    LOGGER.warning(
+                        "Autoplay API returned HTTP %s", resp.status
+                    )
                     return []
 
         except (asyncio.TimeoutError, aiohttp.ClientError):
             if attempt + 1 < retries:
                 await asyncio.sleep(AUTOPLAY_RETRY_DELAY)
                 continue
+            LOGGER.exception("Autoplay request failed")
             return []
 
         except Exception:
+            LOGGER.exception("Unexpected autoplay error")
             return []
 
     return []
@@ -228,7 +242,7 @@ class YouTubeAPI:
                 for entity in message.entities:
                     if entity.type == MessageEntityType.URL:
                         return text[
-                            entity.offset: entity.offset + entity.length
+                            entity.offset:entity.offset + entity.length
                         ]
 
             if message.caption_entities:
@@ -310,6 +324,7 @@ class YouTubeAPI:
             return 0, "Video download failed"
 
         except Exception as exc:
+            LOGGER.exception("YouTube video download failed")
             return 0, f"Video download error: {exc}"
 
     async def playlist(
@@ -323,6 +338,7 @@ class YouTubeAPI:
         try:
             plist = await Playlist.get(link)
         except Exception:
+            LOGGER.exception("YouTube playlist lookup failed")
             return []
 
         videos = plist.get("videos") or []
@@ -369,7 +385,10 @@ class YouTubeAPI:
             link = link.split("&")[0]
 
         def get_formats():
-            with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True}) as ydl:
+            with yt_dlp.YoutubeDL({
+                "quiet": True,
+                "no_warnings": True,
+            }) as ydl:
                 info = ydl.extract_info(link, download=False)
                 formats_available = []
 
@@ -435,6 +454,7 @@ class YouTubeAPI:
                 file_path = await download_video(link)
                 return (file_path, True) if file_path else (None, False)
             except Exception:
+                LOGGER.exception("YouTube video download failed")
                 return None, False
 
         # Resolve an audio-only URL without saving the song locally.
@@ -446,6 +466,7 @@ class YouTubeAPI:
                 "format": "bestaudio[protocol^=http]/bestaudio/best",
             }
 
+            # No cookies or cookie-file options are used here.
             with yt_dlp.YoutubeDL(options) as ydl:
                 info = ydl.extract_info(link, download=False)
 
@@ -462,9 +483,11 @@ class YouTubeAPI:
                 # not this temporary URL.
                 return stream_url, False
 
+            LOGGER.warning("YouTube returned no audio stream URL")
             return None, False
 
         except Exception:
+            LOGGER.exception("YouTube audio URL resolution failed")
             return None, False
 
 
