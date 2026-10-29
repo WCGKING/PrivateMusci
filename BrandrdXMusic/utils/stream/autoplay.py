@@ -363,18 +363,38 @@ async def try_autoplay(chat_id, popped) -> bool:
     language = await get_lang(original_chat_id)
     _ = get_string(language)
 
-    run = await send_now_playing_rich(
-        app,
-        chat_id,
-        original_chat_id,
-        img,
-        _["stream_1"].format(
-            f"https://t.me/{app.me.username}?start=info_{next_id}",
-            title[:23],
-            duration_min,
-            "Autoplay",
-        ),
+    caption = _["stream_1"].format(
+        f"https://t.me/{app.me.username}?start=info_{next_id}",
+        title[:23],
+        duration_min,
+        "Autoplay",
     )
+
+    photo = img
+
+    if not photo:
+        try:
+            photo = await get_thumb(next_id)
+        except Exception:
+            photo = None
+
+    if photo:
+        try:
+            run = await app.send_photo(
+                chat_id=original_chat_id,
+                photo=photo,
+                caption=caption,
+            )
+        except Exception:
+            run = await app.send_message(
+                chat_id=original_chat_id,
+                text=caption,
+            )
+    else:
+        run = await app.send_message(
+            chat_id=original_chat_id,
+            text=caption,
+        )
 
     if db.get(chat_id):
         db[chat_id][0]["mystic"] = run
