@@ -401,7 +401,7 @@ async def _play_flow(
                     _["play_13"],
                     reply_markup=InlineKeyboardMarkup(buttons),
                 )
-        try:
+                try:
             await stream(
                 _,
                 mystic,
@@ -415,11 +415,29 @@ async def _play_flow(
                 spotify=spotify,
                 forceplay=fplay,
             )
+        except FloodWait as e:
+            LOGGER(__name__).warning(
+                "_play_flow: FloodWait, waiting %s seconds", e.value
+            )
+            await asyncio.sleep(e.value)
+            return None
         except Exception as e:
-            LOGGER(__name__).error("_play_flow: unhandled exception", exc_info=True)
+            LOGGER(__name__).error(
+                "_play_flow: unhandled exception", exc_info=True
+            )
             ex_type = type(e).__name__
-            err = e if ex_type == "AssistantErr" else _["general_2"].format(f"{ex_type}: {e}")
-            return await mystic.edit_text(err)
+            err = (
+                e
+                if ex_type == "AssistantErr"
+                else _["general_2"].format(f"{ex_type}: {e}")
+            )
+            try:
+                return await mystic.edit_text(err)
+            except FloodWait as fw:
+                LOGGER(__name__).warning(
+                    "_play_flow: edit_text FloodWait: %s seconds", fw.value
+                )
+                return None
         return await play_logs(message, streamtype=streamtype)
     else:
         if plist_type:
