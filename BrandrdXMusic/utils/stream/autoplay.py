@@ -1,4 +1,3 @@
-
 import asyncio
 import os
 import re
@@ -99,7 +98,10 @@ async def _download(next_id, video, timeout):
     )
 
     try:
-        return await asyncio.wait_for(asyncio.shield(task), timeout)
+        return await asyncio.wait_for(
+            asyncio.shield(task),
+            timeout,
+        )
     except Exception:
         return None, False
 
@@ -115,7 +117,12 @@ async def _pick(chat_id, entry, video, timeout):
         entry["inflight"] = next_id
         thumb_task = asyncio.ensure_future(get_thumb(next_id))
 
-        file_path, direct = await _download(next_id, video, timeout)
+        file_path, direct = await _download(
+            next_id,
+            video,
+            timeout,
+        )
+
         entry["inflight"] = None
 
         if not file_path or not os.path.exists(file_path):
@@ -174,6 +181,7 @@ async def _prefetch(chat_id, entry):
             entry["video"],
             DOWNLOAD_TIMEOUT,
         )
+
     except Exception:
         picked = None
 
@@ -224,7 +232,9 @@ async def schedule_prefetch(chat_id, playing):
     fresh = _new_entry(source_id, carry, video)
 
     _cache[chat_id] = fresh
-    fresh["task"] = asyncio.ensure_future(_prefetch(chat_id, fresh))
+    fresh["task"] = asyncio.ensure_future(
+        _prefetch(chat_id, fresh)
+    )
 
 
 async def try_autoplay(chat_id, popped) -> bool:
@@ -279,7 +289,9 @@ async def try_autoplay(chat_id, popped) -> bool:
         leftover = list(entry["tracks"])
 
     if not picked:
-        same_source = bool(entry) and entry["source_id"] == source_id
+        same_source = (
+            bool(entry) and entry["source_id"] == source_id
+        )
 
         entry = _new_entry(
             source_id,
@@ -287,6 +299,7 @@ async def try_autoplay(chat_id, popped) -> bool:
             video,
             failed,
         )
+
         _cache[chat_id] = entry
 
         if same_source:
@@ -311,9 +324,9 @@ async def try_autoplay(chat_id, popped) -> bool:
 
     next_id, title, duration_min, file_path, direct, img = picked
 
+    # Import inside the function to avoid a circular import.
     from BrandrdXMusic.core.call import Hotty
 
-    # Keep playback and queue handling tied to the existing call manager.
     try:
         await Hotty.skip_stream(
             chat_id,
@@ -328,21 +341,21 @@ async def try_autoplay(chat_id, popped) -> bool:
         await put_queue(
             chat_id,
             original_chat_id,
-            file_path if direct else 
-    f"vid_{next_id}",
-        title,
-        duration_min,
-        "Autoplay",
-        next_id,
-        app.id,
-        "video" if video else "audio",
-    )
-        
+            file_path if direct else f"vid_{next_id}",
+            title,
+            duration_min,
+            "Autoplay",
+            next_id,
+            app.me.id,
+            "video" if video else "audio",
+        )
+
     except Exception:
         try:
             await Hotty.stop_stream(chat_id)
         except Exception:
             pass
+
         _release_file(file_path)
         raise
 
@@ -357,7 +370,7 @@ async def try_autoplay(chat_id, popped) -> bool:
         original_chat_id,
         img,
         _["stream_1"].format(
-            f"https://t.me/{app.username}?start=info_{next_id}",
+            f"https://t.me/{app.me.username}?start=info_{next_id}",
             title[:23],
             duration_min,
             "Autoplay",
