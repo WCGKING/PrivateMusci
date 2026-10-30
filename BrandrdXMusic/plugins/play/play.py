@@ -1,4 +1,3 @@
-
 import asyncio
 import random
 import string
@@ -46,6 +45,7 @@ from config import BANNED_USERS, lyrical
     & filters.group
     & ~BANNED_USERS
 )
+
 @PlayWrapper
 async def play_commnd(
     client,
@@ -58,7 +58,13 @@ async def play_commnd(
     url,
     fplay,
 ):
-    if not await check_admin_and_request(message):
+    print("🔥 PLAY HANDLER STARTED", flush=True)
+
+    result = await check_admin_and_request(message)
+
+    print("🔥 ADMIN CHECK RESULT:", result, flush=True)
+
+    if not result:
         return
 
     await _play_flow(
