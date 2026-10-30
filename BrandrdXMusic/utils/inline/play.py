@@ -45,20 +45,12 @@ def track_markup(_, videoid, user_id, channel, fplay):
 # Stream Timer Markup
 # ============================================================
 def stream_markup_timer(_, vidid, chat_id, played, dur):
-    umm = 0
+    played_sec = time_to_seconds(played)
+    duration_sec = time_to_seconds(dur) or 1  # avoid ZeroDivisionError
+    percentage = (played_sec / duration_sec) * 100
+    umm = math.floor(percentage)
 
-    try:
-        played_sec = time_to_seconds(played) or 0
-        duration_sec = time_to_seconds(dur) or 0
-
-        if duration_sec > 0:
-            percentage = (played_sec / duration_sec) * 100
-            umm = math.floor(max(0, min(100, percentage)))
-
-    except (ValueError, TypeError, ZeroDivisionError, OverflowError):
-        umm = 0
-
-    if umm <= 10:
+    if 0 < umm <= 10:
         bar = "❥—————————"
     elif umm < 20:
         bar = "—❥————————"
