@@ -46,6 +46,7 @@ from config import BANNED_USERS, lyrical
     & ~BANNED_USERS
 )
 
+
 @PlayWrapper
 async def play_commnd(
     client,
@@ -58,15 +59,22 @@ async def play_commnd(
     url,
     fplay,
 ):
-
     result = await check_admin_and_request(message)
 
-if not result:
-    return
+    if not result:
+        return
 
-await _play_flow(
-    client, message, _, chat_id, video, channel, playmode, url, fplay
-)
+    await _play_flow(
+        client,
+        message,
+        _,
+        chat_id,
+        video,
+        channel,
+        playmode,
+        url,
+        fplay,
+    )
 
 async def _play_flow(
     client,
