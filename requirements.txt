@@ -11,11 +11,11 @@ httpx[http2]
 heroku3
 speedtest
 motor 
-pillow==9.5.0
+pillow==12.3.0
 psutil
 py-tgcalls==3.0.0
 python-dotenv
-pyyaml==6.0.1
+pyyaml==6.0.3
 kurigram==2.2.26
 spotipy
 tgcrypto
@@ -24,10 +24,10 @@ telegraph
 unidecode
 yt-dlp[default]
 py-yt-search
-lexica-api==1.5.1
+lexica-api==1.6.0
 gpytranslate
 python-telegram-bot
 pycryptodome
 opencv-python
 ntgcalls==3.0.5
-lyricsgenius==3.0.0
+lyricsgenius==3.7.3
