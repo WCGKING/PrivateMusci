@@ -1,7 +1,7 @@
 import asyncio
 
-from pyrogram.enums import ChatMemberStatus, ChatMembersFilter, ParseMode
-from pyrogram.errors import FloodWait
+from pyrogram.enums import ChatMemberStatus, ChatMembersFilter
+from pyrogram.errors import FloodWait, UserAlreadyParticipant
 
 from BrandrdXMusic import app
 
@@ -9,23 +9,15 @@ _REQUESTED_CHATS = set()
 
 
 async def safe_reply(message, text):
-    formatted_text = f"<b><blockquote>{text}</blockquote></b>"
-
     try:
-        await message.reply_text(
-            formatted_text,
-            parse_mode=ParseMode.HTML,
-        )
+        await message.reply_text(text)
         return True
 
     except FloodWait as exc:
         await asyncio.sleep(exc.value + 1)
 
         try:
-            await message.reply_text(
-                formatted_text,
-                parse_mode=ParseMode.HTML,
-            )
+            await message.reply_text(text)
             return True
         except Exception:
             return False
@@ -43,21 +35,16 @@ async def notify_owner(message):
             filter=ChatMembersFilter.ADMINISTRATORS,
         ):
             if member.status == ChatMemberStatus.OWNER:
-                owner = member.user
-
                 try:
                     await app.send_message(
-                        owner.id,
+                        member.user.id,
                         (
-                            "<b><blockquote>"
-                            "⚠️ Admin Request\n\n"
-                            f"Group: {message.chat.title or 'Unknown'}\n"
-                            f"Group ID: <code>{chat_id}</code>\n\n"
-                            "Please make the BrandrdXMusic bot an "
-                            "Admin to enable music playback. 🎵"
-                            "</blockquote></b>"
+                            "⚠️ **Admin Request**\n\n"
+                            f"Group: **{message.chat.title or 'Unknown'}**\n"
+                            f"Group ID: `{chat_id}`\n\n"
+                            "Please make the BrandedXMusic bot an "
+                            "Admin with Invite Users permission. 🎵"
                         ),
-                        parse_mode=ParseMode.HTML,
                     )
                     return True
 
@@ -68,6 +55,115 @@ async def notify_owner(message):
         return False
 
     return False
+
+
+async def invite_assistant(message):
+    chat_id = message.chat.id
+
+    try:
+        from BrandrdXMusic.core.call import Hotty
+        from BrandrdXMusic.utils.database import group_assistant
+
+        # Get the assistant selected for this group.
+        assistant = await group_assistant(Hotty, chat_id)
+
+        # Match the selected PyTgCalls client to its Pyrogram client.
+        assistant_clients = {
+            id(Hotty.one): Hotty.userbot1,
+            id(Hotty.two): Hotty.userbot2,
+            id(Hotty.three): Hotty.userbot3,
+            id(Hotty.four): Hotty.userbot4,
+            id(Hotty.five): Hotty.userbot5,
+        }
+
+        assistant_client = assistant_clients.get(id(assistant))
+
+        if assistant_client is None:
+            await safe_reply(
+                message,
+                "❌ Could not identify the selected assistant account.",
+            )
+            return False
+
+        assistant_user = await assistant_client.get_me()
+
+        # Check whether the assistant is already in the group.
+        try:
+            member = await app.get_chat_member(
+                chat_id,
+                assistant_user.id,
+            )
+
+            if member.status not in (
+                ChatMemberStatus.LEFT,
+                ChatMemberStatus.BANNED,
+            ):
+                return True
+
+        except Exception:
+            pass
+
+        # Main bot invites the selected assistant.
+        await app.add_chat_members(
+            chat_id,
+            assistant_user.id,
+        )
+
+        return True
+
+    except UserAlreadyParticipant:
+        return True
+
+    except FloodWait as exc:
+        await asyncio.sleep(exc.value + 1)
+
+        try:
+            from BrandrdXMusic.core.call import Hotty
+            from BrandrdXMusic.utils.database import group_assistant
+
+            assistant = await group_assistant(Hotty, chat_id)
+
+            assistant_clients = {
+                id(Hotty.one): Hotty.userbot1,
+                id(Hotty.two): Hotty.userbot2,
+                id(Hotty.three): Hotty.userbot3,
+                id(Hotty.four): Hotty.userbot4,
+                id(Hotty.five): Hotty.userbot5,
+            }
+
+            assistant_client = assistant_clients.get(id(assistant))
+
+            if not assistant_client:
+                return False
+
+            assistant_user = await assistant_client.get_me()
+
+            await app.add_chat_members(
+                chat_id,
+                assistant_user.id,
+            )
+
+            return True
+
+        except UserAlreadyParticipant:
+            return True
+        except Exception:
+            await safe_reply(
+                message,
+                "❌ Assistant invite failed. Please try again later.",
+            )
+            return False
+
+    except Exception:
+        await safe_reply(
+            message,
+            (
+                "❌ **Assistant Joining Failed**\n\n"
+                "Please make sure I have Admin permission with "
+                "Invite Users enabled."
+            ),
+        )
+        return False
 
 
 async def check_admin_and_request(message):
@@ -81,12 +177,28 @@ async def check_admin_and_request(message):
             bot.id,
         )
 
-        if member.status in (
+        if member.status not in (
             ChatMemberStatus.ADMINISTRATOR,
             ChatMemberStatus.OWNER,
         ):
-            _REQUESTED_CHATS.discard(chat_id)
-            return True
+            if chat_id not in _REQUESTED_CHATS:
+                group_text = (
+                    "⚠️ **Admin Permission Required**\n\n"
+                    "Mujhe music play karne ke liye Admin banayein. 🎵\n\n"
+                    "Please enable Invite Users permission "
+                    "and try again."
+                )
+
+                sent = await safe_reply(message, group_text)
+
+                await notify_owner(message)
+
+                if sent:
+                    _REQUESTED_CHATS.add(chat_id)
+
+            return False
+
+        _REQUESTED_CHATS.discard(chat_id)
 
     except FloodWait as exc:
         await asyncio.sleep(exc.value + 1)
@@ -102,21 +214,10 @@ async def check_admin_and_request(message):
         )
         return False
 
-    if chat_id in _REQUESTED_CHATS:
+    # Automatically invite the selected assistant.
+    joined = await invite_assistant(message)
+
+    if not joined:
         return False
 
-    group_text = (
-        "⚠️ Admin Permission Required\n\n"
-        "Mujhe music play karne ke liye Admin banayein. 🎵\n\n"
-        "Please promote me to Admin, then try your command again."
-    )
-
-    sent = await safe_reply(message, group_text)
-
-    await notify_owner(message)
-
-    if sent:
-        _REQUESTED_CHATS.add(chat_id)
-
-    return False
-4v
+    return True
