@@ -116,7 +116,6 @@ def stream_markup_timer(_, vidid, chat_id, played, dur):
         ],
     ]
 
-
 # ============================================================
 # Autoplay Markup
 # ============================================================
@@ -124,10 +123,10 @@ def stream_markup_timer(_, vidid, chat_id, played, dur):
 def autoplay_markup(chat_id, mode=None):
     if mode is True:
         text = "🟢 Autoplay: ON"
-        style = COLORS[1]
+        style = COLORS[2]
     elif mode is False:
         text = "🔴 Autoplay: OFF"
-        style = COLORS[2]
+        style = COLORS[1]
     else:
         text = "🔁 Autoplay: ON/OFF"
         style = COLORS[0]
@@ -137,7 +136,12 @@ def autoplay_markup(chat_id, mode=None):
             text=text,
             callback_data=f"autoplay {chat_id}",
             style=style,
-        )
+        ),
+        InlineKeyboardButton(
+            text="💬 Support",
+            url="https://t.me/BrandedSupport",
+            style=COLORS[0],
+        ),
     ]
 
 # ============================================================
