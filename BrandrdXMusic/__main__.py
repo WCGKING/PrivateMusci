@@ -13,6 +13,7 @@ from BrandrdXMusic.core.call import Hotty
 from BrandrdXMusic.misc import sudo
 from BrandrdXMusic.plugins import ALL_MODULES
 from BrandrdXMusic.utils.database import get_banned_users, get_gbanned
+from BrandrdXMusic.plugins.admins.callback import markup_timer
 from config import BANNED_USERS
 
 
@@ -151,6 +152,8 @@ async def init():
         )
 
     await Hotty.decorators()
+    # Start Stream Markup Timer
+    timer_task = asyncio.create_task(markup_timer())
 
     LOGGER("BrandrdXMusic").info(
     "ᴅʀᴏᴘ ʏᴏᴜʀ ɢɪʀʟꜰʀɪᴇɴᴅ'ꜱ ɴᴜᴍʙᴇʀ ᴀᴛ @BRANDED_PAID_CC ᴊᴏɪɴ @BRANDRD_BOT , @BRANDEDKING8 ꜰᴏʀ ᴀɴʏ ɪꜱꜱᴜᴇꜱ"
@@ -159,6 +162,13 @@ async def init():
     try:
         await idle()
     finally:
+        timer_task.cancel()
+
+        try:
+            await timer_task
+        except asyncio.CancelledError:
+            pass
+            
         await Hotty.stop()
         await userbot.stop()
         await app.stop()
