@@ -572,7 +572,6 @@ async def nowplaying_autoplay_toggle(client, CallbackQuery, _):
         _ = get_string(language)
         mode = await is_autoplay(chat_id)
 
-        # Use the timer markup if the player already has its timer keyboard.
         buttons = stream_markup_timer(
             _,
             current.get("vidid", ""),
@@ -580,7 +579,21 @@ async def nowplaying_autoplay_toggle(client, CallbackQuery, _):
             seconds_to_min(current.get("played", 0) or 0),
             current.get("dur", "00:00"),
         )
-        buttons[-2] = autoplay_markup(chat_id, mode)
+
+        # Remove existing autoplay row to avoid duplicates
+        buttons = [
+            row for row in buttons
+            if not any(
+                getattr(button, "callback_data", "") and
+                str(button.callback_data).startswith(
+                    ("autoplay ", "nowplaying_autoplay ")
+                )
+                for button in row
+            )
+        ]
+
+        # Add autoplay without replacing timer/player controls
+        buttons.append(autoplay_markup(chat_id, mode))
 
         await mystic.edit_reply_markup(
             reply_markup=InlineKeyboardMarkup(buttons)
@@ -588,6 +601,7 @@ async def nowplaying_autoplay_toggle(client, CallbackQuery, _):
 
     except MessageNotModified:
         pass
+
     except Exception:
         LOGGER(__name__).warning(
             "Autoplay keyboard update failed",
