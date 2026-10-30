@@ -58,19 +58,15 @@ async def play_commnd(
     url,
     fplay,
 ):
-    print("🔥 PLAY HANDLER STARTED", flush=True)
 
     result = await check_admin_and_request(message)
 
-    print("🔥 ADMIN CHECK RESULT:", result, flush=True)
+if not result:
+    return
 
-    if not result:
-        return
-
-    await _play_flow(
-        client, message, _, chat_id, video, channel, playmode, url, fplay
-    )
-
+await _play_flow(
+    client, message, _, chat_id, video, channel, playmode, url, fplay
+)
 
 async def _play_flow(
     client,
