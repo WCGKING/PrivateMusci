@@ -2,27 +2,75 @@ import asyncio
 import logging
 
 from pyrogram.enums import ChatMemberStatus, ChatMembersFilter
-from pyrogram.errors import (
-    ChatAdminRequired,
-    FloodWait,
-    RPCError,
-    UserIsBlocked,
-    PeerIdInvalid,
-)
+from pyrogram.errors import FloodWait, RPCError
 
 from BrandrdXMusic import app
 
 LOGGER = logging.getLogger(__name__)
 
-# Avoid repeated requests in the same running process
 _REQUESTED_CHATS = set()
 
 
+async def safe_reply(message, text):
+    try:
+        await message.reply_text(text)
+        return True
+
+    except FloodWait as exc:
+        LOGGER.warning("Group message FloodWait: %s", exc.value)
+        await asyncio.sleep(exc.value + 1)
+
+        try:
+            await message.reply_text(text)
+            return True
+        except Exception:
+            LOGGER.exception("Group notification retry failed")
+            return False
+
+    except Exception:
+        LOGGER.exception("Could not send group notification")
+        return False
+
+
+async def notify_owner(message):
+    chat_id = message.chat.id
+
+    try:
+        async for member in app.get_chat_members(
+            chat_id,
+            filter=ChatMembersFilter.ADMINISTRATORS,
+        ):
+            if member.status == ChatMemberStatus.OWNER:
+                owner = member.user
+
+                try:
+                    await app.send_message(
+                        owner.id,
+                        (
+                            "⚠️ **Admin Request**\n\n"
+                            f"Group: **{message.chat.title or 'Unknown'}**\n"
+                            f"Group ID: `{chat_id}`\n\n"
+                            "Please make the BrandrdXMusic bot an "
+                            "Admin to enable music playback. 🎵"
+                        ),
+                    )
+                    LOGGER.info("Owner notification sent for %s", chat_id)
+                    return True
+
+                except Exception:
+                    LOGGER.exception(
+                        "Could not DM group owner for %s",
+                        chat_id,
+                    )
+                    return False
+
+    except Exception:
+        LOGGER.exception("Could not find group owner for %s", chat_id)
+
+    return False
+
+
 async def check_admin_and_request(message):
-    """
-    Returns True if the bot is admin.
-    Returns False if it isn't admin and a request was sent.
-    """
     chat_id = message.chat.id
 
     try:
@@ -33,58 +81,39 @@ async def check_admin_and_request(message):
             ChatMemberStatus.ADMINISTRATOR,
             ChatMemberStatus.OWNER,
         ):
+            _REQUESTED_CHATS.discard(chat_id)
             return True
 
-        if chat_id in _REQUESTED_CHATS:
-            return False
+    except FloodWait as exc:
+        LOGGER.warning("Admin check FloodWait: %s", exc.value)
+        await asyncio.sleep(exc.value + 1)
+        return False
 
+    except Exception:
+        LOGGER.exception("Could not check bot admin status in %s", chat_id)
+        await safe_reply(
+            message,
+            "⚠️ I couldn't verify my Admin status. "
+            "Please check my group permissions.",
+        )
+        return False
+
+    if chat_id in _REQUESTED_CHATS:
+        return False
+
+    group_text = (
+        "⚠️ **Admin Permission Required**\n\n"
+        "Mujhe music play karne ke liye Admin banayein. 🎵\n\n"
+        "Please promote me to Admin, then try your command again."
+    )
+
+    # Group notification is attempted independently of owner DM.
+    sent = await safe_reply(message, group_text)
+
+    # Owner DM is attempted separately.
+    await notify_owner(message)
+
+    if sent:
         _REQUESTED_CHATS.add(chat_id)
 
-        group_text = (
-            "⚠️ **Admin Permission Required**\n\n"
-            "Mujhe music play karne ke liye Admin banayein. 🎵\n"
-            "Please promote me to Admin, then try your command again."
-        )
-
-        # Try to notify the group owner privately
-        owner_name = "Group Owner"
-        try:
-            async for member in app.get_chat_members(
-                chat_id,
-                filter=ChatMembersFilter.ADMINISTRATORS,
-            ):
-                if member.status == ChatMemberStatus.OWNER:
-                    owner = member.user
-                    owner_name = owner.first_name or owner_name
-
-                    await app.send_message(
-                        owner.id,
-                        f"⚠️ Admin request for **{message.chat.title}**\n\n"
-                        "Please make the BrandrdXMusic bot an Admin "
-                        "so it can manage music playback."
-                    )
-                    break
-        except (RPCError, UserIsBlocked, PeerIdInvalid):
-            LOGGER.info(
-                "Could not privately notify the owner of %s",
-                chat_id,
-            )
-
-        # Always try to notify the group
-        await message.reply_text(group_text)
-
-        return False
-
-    except FloodWait as exc:
-        LOGGER.warning("Telegram FloodWait: %s seconds", exc.value)
-        return False
-    except (ChatAdminRequired, RPCError) as exc:
-        LOGGER.warning("Admin check failed in %s: %s", chat_id, exc)
-        try:
-            await message.reply_text(
-                "⚠️ I couldn't verify my Admin status. "
-                "Please check my permissions."
-            )
-        except RPCError:
-            pass
-        return False
+    return False
