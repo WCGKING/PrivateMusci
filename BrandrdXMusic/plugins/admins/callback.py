@@ -580,20 +580,7 @@ async def nowplaying_autoplay_toggle(client, CallbackQuery, _):
             current.get("dur", "00:00"),
         )
 
-        # Remove existing autoplay row to avoid duplicates
-        buttons = [
-            row for row in buttons
-            if not any(
-                getattr(button, "callback_data", "") and
-                str(button.callback_data).startswith(
-                    ("autoplay ", "nowplaying_autoplay ")
-                )
-                for button in row
-            )
-        ]
-
-        # Add autoplay without replacing timer/player controls
-        buttons.append(autoplay_markup(chat_id, mode))
+        buttons[-2] = autoplay_markup(chat_id, mode)
 
         await mystic.edit_reply_markup(
             reply_markup=InlineKeyboardMarkup(buttons)
