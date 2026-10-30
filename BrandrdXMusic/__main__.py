@@ -137,7 +137,7 @@ async def init():
             "https://graph.org/file/e999c40cb700e7c684b75.mp4"
         )
 
-        except NoActiveGroupCall:
+    except NoActiveGroupCall:
         LOGGER("BrandrdXMusic").error(
             "Please turn on the videochat of your log group/channel."
         )
@@ -157,8 +157,8 @@ async def init():
     timer_task = asyncio.create_task(markup_timer())
 
     LOGGER("BrandrdXMusic").info(
-    "ᴅʀᴏᴘ ʏᴏᴜʀ ɢɪʀʟꜰʀɪᴇɴᴅ'ꜱ ɴᴜᴍʙᴇʀ ᴀᴛ @BRANDED_PAID_CC ᴊᴏɪɴ @BRANDRD_BOT , @BRANDEDKING8 ꜰᴏʀ ᴀɴʏ ɪꜱꜱᴜᴇꜱ"
-            )
+        "ᴅʀᴏᴘ ʏᴏᴜʀ ɢɪʀʟꜰʀɪᴇɴᴅ'ꜱ ɴᴜᴍʙᴇʀ ᴀᴛ @BRANDED_PAID_CC ᴊᴏɪɴ @BRANDRD_BOT , @BRANDEDKING8 ꜰᴏʀ ᴀɴʏ ɪꜱꜱᴜᴇꜱ"
+    )
 
     try:
         await idle()
