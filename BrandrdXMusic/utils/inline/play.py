@@ -51,25 +51,25 @@ def stream_markup_timer(_, vidid, chat_id, played, dur):
     umm = math.floor(percentage)
 
     if 0 < umm <= 10:
-        bar = "❥—————————"
+        bar = "▷—————————"
     elif umm < 20:
-        bar = "—❥————————"
+        bar = "—▷————————"
     elif umm < 30:
-        bar = "——❥———————"
+        bar = "——▷———————"
     elif umm < 40:
-        bar = "———❥——————"
+        bar = "———▷——————"
     elif umm < 50:
-        bar = "————❥—————"
+        bar = "————▷—————"
     elif umm < 60:
-        bar = "—————❥————"
+        bar = "—————▷————"
     elif umm < 70:
-        bar = "——————❥———"
+        bar = "——————▷———"
     elif umm < 80:
-        bar = "———————❥——"
-    elif umm < 95:
-        bar = "————————❥—"
-    else:
-        bar = "—————————❥"
+        bar = "———————▷——"
+    elif umm < 90:
+        bar = "————————▷—"
+    else: umm < 95
+        bar = "—————————▷"
 
     return [
         [
