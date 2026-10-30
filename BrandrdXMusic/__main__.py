@@ -146,10 +146,10 @@ async def init():
         await app.stop()
         return
 
-    except Exception:
-        LOGGER("BrandrdXMusic").exception(
-            "Could not start the initial stream. Continuing..."
-        )
+        except Exception as e:
+            LOGGER("BrandrdXMusic").warning(
+                "Initial VC connection failed: %s", e
+            )
 
     await Hotty.decorators()
     # Start Stream Markup Timer
