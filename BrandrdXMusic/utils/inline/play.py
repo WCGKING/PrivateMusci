@@ -41,31 +41,6 @@ def track_markup(_, videoid, user_id, channel, fplay):
         ],
     ]
 
-
-# ============================================================
-# Autoplay Markup
-# ============================================================
-
-def autoplay_markup(chat_id, mode=None):
-    if mode is True:
-        text = "🟢 Autoplay: ON"
-        style = COLORS[1]
-    elif mode is False:
-        text = "🔴 Autoplay: OFF"
-        style = COLORS[2]
-    else:
-        text = "🔁 Autoplay: ON/OFF"
-        style = COLORS[0]
-
-    return [
-        InlineKeyboardButton(
-            text=text,
-            callback_data=f"autoplay {chat_id}",
-            style=style,
-        )
-    ]
-
-
 # ============================================================
 # Stream Timer Markup
 # ============================================================
@@ -147,6 +122,30 @@ def stream_markup_timer(_, vidid, chat_id, played, dur):
                 style=COLORS[2],
             )
         ],
+    ]
+
+
+# ============================================================
+# Autoplay Markup
+# ============================================================
+
+def autoplay_markup(chat_id, mode=None):
+    if mode is True:
+        text = "🟢 Autoplay: ON"
+        style = COLORS[1]
+    elif mode is False:
+        text = "🔴 Autoplay: OFF"
+        style = COLORS[2]
+    else:
+        text = "🔁 Autoplay: ON/OFF"
+        style = COLORS[0]
+
+    return [
+        InlineKeyboardButton(
+            text=text,
+            callback_data=f"autoplay {chat_id}",
+            style=style,
+        )
     ]
 
 # ============================================================
