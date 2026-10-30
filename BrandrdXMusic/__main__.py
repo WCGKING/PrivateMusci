@@ -137,7 +137,7 @@ async def init():
             "https://graph.org/file/e999c40cb700e7c684b75.mp4"
         )
 
-    except NoActiveGroupCall:
+        except NoActiveGroupCall:
         LOGGER("BrandrdXMusic").error(
             "Please turn on the videochat of your log group/channel."
         )
@@ -146,12 +146,13 @@ async def init():
         await app.stop()
         return
 
-        except Exception as e:
-            LOGGER("BrandrdXMusic").warning(
-                "Initial VC connection failed: %s", e
-            )
+    except Exception as e:
+        LOGGER("BrandrdXMusic").warning(
+            "Initial VC connection failed: %s", e
+        )
 
     await Hotty.decorators()
+
     # Start Stream Markup Timer
     timer_task = asyncio.create_task(markup_timer())
 
@@ -168,7 +169,7 @@ async def init():
             await timer_task
         except asyncio.CancelledError:
             pass
-            
+
         await Hotty.stop()
         await userbot.stop()
         await app.stop()
